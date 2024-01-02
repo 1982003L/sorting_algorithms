@@ -1,88 +1,84 @@
 #include "sort.h"
 
+int get_max(int *array, int size);
+void radix_counting_sort(int *array, size_t size, int sig, int *buff);
+void radix_sort(int *array, size_t size);
+
 /**
- * radix_sort - sorting using radix.
- * @array: input array
- * @size: size of array
+ * get_max - Get the maximum value in an array of integers.
+ * @array: An array of integers.
+ * @size: The size of the array.
+ *
+ * Return: The maximum integer in the array.
+ */
+int get_max(int *array, int size)
+{
+	int max, i;
+
+	for (max = array[0], i = 1; i < size; i++)
+	{
+		if (array[i] > max)
+			max = array[i];
+	}
+
+	return (max);
+}
+
+/**
+ * radix_counting_sort - Sort the significant digits of an array of integers
+ *                       in ascending order using the counting sort algorithm.
+ * @array: An array of integers.
+ * @size: The size of the array.
+ * @sig: The significant digit to sort on.
+ * @buff: A buffer to store the sorted array.
+ */
+void radix_counting_sort(int *array, size_t size, int sig, int *buff)
+{
+	int count[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	size_t i;
+
+	for (i = 0; i < size; i++)
+		count[(array[i] / sig) % 10] += 1;
+
+	for (i = 0; i < 10; i++)
+		count[i] += count[i - 1];
+
+	for (i = size - 1; (int)i >= 0; i--)
+	{
+		buff[count[(array[i] / sig) % 10] - 1] = array[i];
+		count[(array[i] / sig) % 10] -= 1;
+	}
+
+	for (i = 0; i < size; i++)
+		array[i] = buff[i];
+}
+
+/**
+ * radix_sort - Sort an array of integers in ascending
+ *              order using the radix sort algorithm.
+ * @array: An array of integers.
+ * @size: The size of the array.
+ *
+ * Description: Implements the LSD radix sort algorithm. Prints
+ * the array after each significant digit increase.
  */
 void radix_sort(int *array, size_t size)
 {
-	unsigned int i, sort = 1;
+	int max, sig, *buff;
 
 	if (array == NULL || size < 2)
 		return;
 
-	for (i = 1; sort == 1; i++)
+	buff = malloc(sizeof(int) * size);
+	if (buff == NULL)
+		return;
+
+	max = get_max(array, size);
+	for (sig = 1; max / sig > 0; sig *= 10)
 	{
-		sort = count_sort(array, size, i);
+		radix_counting_sort(array, size, sig, buff);
 		print_array(array, size);
 	}
-}
 
-/**
- * count_sort - sorting using counting sort
- * @array: input array
- * @size: size of array
- * @number: number to sort by
- * Return: (1) to keep sorting otherwise 0.
- */
-unsigned int count_sort(int *array, size_t size, unsigned int number)
-{
-	int i, count[10] = {0};
-	int *copy = NULL;
-	size_t ii, temp, result = 0;
-	unsigned int npw1, npw2, sort = 0;
-
-	npw2 = pow_10(number - 1);
-	npw1 = npw2 * 10;
-	copy = malloc(sizeof(int) * size);
-
-	if (copy == NULL)
-		exit(1);
-
-	for (ii = 0; ii < size; ii++)
-	{
-		copy[ii] = array[ii];
-		if (array[ii] / npw1 != 0)
-			sort = 1;
-	}
-
-	for (i = 0; i < 10; i++)
-		count[i] = 0;
-	for (ii = 0; ii < size; ii++)
-		count[(array[ii] % npw1) / npw2] += 1;
-
-	for (i = 0; i < 10; i++)
-	{
-		temp = count[i];
-		count[i] = result;
-		result += temp;
-	}
-
-	for (ii = 0; ii < size; ii++)
-	{
-		array[count[(copy[ii] % npw1) / npw2]] = copy[ii];
-		count[(copy[ii] % npw1) % npw2] += 1;
-	}
-
-	free(copy);
-	return (sort);
-}
-
-/**
- * pow_10 - get power of 10
- * @power: power of 10
- * Return: result of pow_10
- */
-unsigned int pow_10(unsigned int power)
-{
-	unsigned int i, result;
-
-	result = 1;
-
-	for (i = 0; i < power; i++)
-	{
-		result *= 10;
-	}
-	return (result);
+	free(buff);
 }
